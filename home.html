@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Geo Pothole Detection</title>
+    
+    <!-- SEO & Meta -->
+    <meta name="description" content="Report potholes quickly and easily with the Geo Pothole Detection app. Help keep our roads safe.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <i class="fa-solid fa-road-circle-exclamation"></i>
+                <h1>GeoPothole</h1>
+            </div>
+            <button class="header-action" aria-label="Notifications">
+                <i class="fa-regular fa-bell"></i>
+            </button>
+        </header>
+
+        <!-- Main Content Area (Views) -->
+        <main id="main-content">
+            
+            <!-- VIEW: HOME -->
+            <section id="view-home" class="view active">
+                <div class="hero-section">
+                    <h2>Spotted a pothole?</h2>
+                    <p>Help fix our roads in under 30 seconds.</p>
+                    
+                    <button class="btn-primary btn-massive pulse-animation" onclick="navigateTo('report')">
+                        <i class="fa-solid fa-camera"></i>
+                        <span>Report Pothole Now</span>
+                    </button>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stat-item">
+                        <span class="stat-value">142</span>
+                        <span class="stat-label">Reported</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value text-success">89</span>
+                        <span class="stat-label">Fixed</span>
+                    </div>
+                </div>
+
+                <div class="recent-activity">
+                    <h3>Recent Activity</h3>
+                    <div class="activity-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW: REPORT (3 Steps) -->
+            <section id="view-report" class="view">
+                <div class="view-header">
+                    <h2>New Report</h2>
+                    <div class="step-indicator">
+                        <span class="step active" id="indicator-step-1">1</span>
+                        <div class="step-line"></div>
+                        <span class="step" id="indicator-step-2">2</span>
+                        <div class="step-line"></div>
+                        <span class="step" id="indicator-step-3">3</span>
+                    </div>
+                </div>
+
+                <!-- Step 1: Photo -->
+                <div id="report-step-1" class="report-step active">
+                    <h3>Take a Photo</h3>
+                    <p class="subtitle">Show us the damage</p>
+                    
+                    <div class="camera-container" id="camera-dropzone" onclick="document.getElementById('pothole-image').click()">
+                        <input type="file" id="pothole-image" accept="image/*" capture="environment" hidden>
+                        <div class="camera-placeholder" id="camera-placeholder">
+                            <i class="fa-solid fa-camera-retro"></i>
+                            <span>Tap to Open Camera</span>
+                        </div>
+                        <img id="image-preview" src="" alt="Pothole Preview" style="display: none;">
+                    </div>
+                    
+                    <div class="step-actions">
+                        <button class="btn-secondary" onclick="navigateTo('home')">Cancel</button>
+                        <button class="btn-primary" id="btn-next-step-1" onclick="nextReportStep(2)" disabled>Next Step <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Location -->
+                <div id="report-step-2" class="report-step">
+                    <h3>Location</h3>
+                    <p class="subtitle">Where is this pothole?</p>
+                    
+                    <div class="location-status" id="location-status">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Finding your location...
+                    </div>
+                    
+                    <div class="map-container mini-map" id="report-map"></div>
+                    
+                    <p class="help-text"><i class="fa-solid fa-hand-pointer"></i> Drag the map to adjust exactly where the pothole is.</p>
+
+                    <div class="form-group">
+                        <label for="pothole-address">Manual Address (Optional)</label>
+                        <input type="text" id="pothole-address" class="text-input" placeholder="e.g., 123 Main St near Central Park...">
+                    </div>
+                    
+                    <div class="step-actions">
+                        <button class="btn-secondary" onclick="nextReportStep(1)">Back</button>
+                        <button class="btn-primary" id="btn-next-step-2" onclick="nextReportStep(3)" disabled>Next Step <i class="fa-solid fa-arrow-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Details & Submit -->
+                <div id="report-step-3" class="report-step">
+                    <h3>Final Details</h3>
+                    <p class="subtitle">Add a quick note (optional)</p>
+                    
+                    <div class="form-group">
+                        <label for="pothole-desc">Description</label>
+                        <textarea id="pothole-desc" placeholder="e.g., Deep pothole in the middle lane, hard to see at night..."></textarea>
+                    </div>
+
+                    <div class="severity-selector">
+                        <label>Severity Level</label>
+                        <div class="severity-options">
+                            <button class="sev-btn low" onclick="selectSeverity('low')">Minor</button>
+                            <button class="sev-btn medium active" onclick="selectSeverity('medium')">Moderate</button>
+                            <button class="sev-btn high" onclick="selectSeverity('high')">Severe</button>
+                        </div>
+                    </div>
+                    
+                    <div class="step-actions vertical">
+                        <button class="btn-primary btn-large btn-submit" onclick="submitReport()">
+                            <i class="fa-solid fa-paper-plane"></i> Submit Report
+                        </button>
+                        <button class="btn-text" onclick="nextReportStep(2)">Back to Location</button>
+                    </div>
+                </div>
+                
+                <!-- Success State -->
+                <div id="report-success" class="report-step success-state">
+                    <div class="success-icon">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <h3>Report Submitted!</h3>
+                    <p>Thank you for helping keep our roads safe.</p>
+                    <button class="btn-primary" onclick="resetReportAndGoHome()">Back to Home</button>
+                </div>
+            </section>
+
+            <!-- VIEW: MAP -->
+            <section id="view-map" class="view">
+                <div class="map-header">
+                    <h2>Live Map</h2>
+                    <div class="map-legend">
+                        <span class="legend-item"><span class="dot red"></span> Reported</span>
+                        <span class="legend-item"><span class="dot orange"></span> In Progress</span>
+                        <span class="legend-item"><span class="dot green"></span> Fixed</span>
+                    </div>
+                </div>
+                <div id="main-map" class="full-map"></div>
+            </section>
+
+            <!-- VIEW: ABOUT -->
+            <section id="view-about" class="view">
+                <div class="about-content">
+                    <h2>About the Project</h2>
+                    <img src="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Road Maintenance" class="about-image" crossorigin="anonymous">
+                    
+                    <div class="info-card">
+                        <h3>Our Mission</h3>
+                        <p>Geo Pothole Detection directly connects citizens with municipal workers. Our goal is to reduce reporting friction drastically to ensure safer commutes for everyone.</p>
+                    </div>
+                    
+                    <div class="info-card contact-card">
+                        <h3>Contact Authorities</h3>
+                        <p>For urgent hazards blocking traffic, please call emergency services immediately.</p>
+                        <a href="tel:311" class="btn-secondary"><i class="fa-solid fa-phone"></i> Call 311 (Non-Emergency)</a>
+                    </div>
+                </div>
+            </section>
+            
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="navigateTo('home')" id="nav-home">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </button>
+            <button class="nav-item nav-item-special" onclick="navigateTo('report')" id="nav-report">
+                <div class="fab-wrapper">
+                    <i class="fa-solid fa-plus"></i>
+                </div>
+                <span>Report</span>
+            </button>
+            <button class="nav-item" onclick="navigateTo('map')" id="nav-map">
+                <i class="fa-solid fa-map-location-dot"></i>
+                <span>Map</span>
+            </button>
+        </nav>
+        
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="overlay hidden">
+            <div class="spinner"></div>
+            <p id="loading-text">Uploading report...</p>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+</body>
+</html>
