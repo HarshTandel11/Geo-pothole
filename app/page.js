@@ -58,6 +58,12 @@ export default function Home() {
     // Make state available for inline onclick handlers
     window.__geoState = state;
 
+    // Set initial disabled state imperatively (React JSX disabled prop fights DOM manipulation)
+    const btnStep1 = document.getElementById("btn-next-step-1");
+    const btnStep2 = document.getElementById("btn-next-step-2");
+    if (btnStep1) btnStep1.disabled = true;
+    if (btnStep2) btnStep2.disabled = true;
+
     // ==========================================
     // NAVIGATION (Tabs)
     // ==========================================
@@ -531,7 +537,6 @@ export default function Home() {
                 className="btn-primary"
                 id="btn-next-step-1"
                 onClick={() => window.nextReportStep(2)}
-                disabled
               >
                 Next Step <i className="fa-solid fa-arrow-right"></i>
               </button>
@@ -581,7 +586,6 @@ export default function Home() {
                 className="btn-primary"
                 id="btn-next-step-2"
                 onClick={() => window.nextReportStep(3)}
-                disabled
               >
                 Next Step <i className="fa-solid fa-arrow-right"></i>
               </button>
